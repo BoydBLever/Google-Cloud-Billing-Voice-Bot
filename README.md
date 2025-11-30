@@ -62,10 +62,7 @@ git clone https://github.com/BoydBLever/Google-Cloud-Billing-Agent.git
 cd Google-Cloud-Billing-Agent
 ```
 
-2. List your Google Cloud projects
-```
-gcloud projects list
-```
+2. Sign in to the **Google Cloud Console** at [Welcome page](https://console.cloud.google.com/welcome?project=elite-protocol-479210-n4), then **create a new project** using the [Create Project page](https://console.cloud.google.com/projectcreate), and **enable Cloud Billing** through the console if needed (not required if you already have credits or hackathon credits active). After that, run `gcloud projects list` in Cloud Shell to list all available projects.
 
 3. Set your active Google Cloud project in Cloud Shell. Once you get a Project ID, set it like this:
 ```
