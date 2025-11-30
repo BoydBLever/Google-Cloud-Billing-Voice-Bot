@@ -1,7 +1,7 @@
 # Google Build and Blog 2025
 # Project: Google Cloud Billing Agent
 
-This project is for Google Build and Blog 2025. It is a Google Cloud Billing Voice Bot built as a Streamlit app deployed on Google Cloud Run. Users speak a question about their Google Cloud bill. The captured audio is sent to Google Cloud Speech-to-Text v2 using the Chirp model (for example, chirp_3), which converts speech into text. The transcript is then passed to Gemini 2.5-Flash-Lite via the google-generativeai Python SDK to reason about the user’s billing question, select exactly one action per turn via a structured JSON contract, and return a final answer. For local testing, responses are converted to speech using gTTS .
+This project is for Google Build and Blog 2025. It is a Google Cloud Billing Voice Agent built as a Streamlit app deployed on severless Google Cloud Run. Users speak a question about their Google Cloud bill. The captured audio is sent to Google Cloud Speech-to-Text v2 using the Chirp model (for example, chirp_3). The transcript is then passed to Gemini 2.5-Flash-Lite via the google-generativeai Python SDK to reason about the user’s billing question, select exactly one action per turn via a structured JSON contract, and return a final answer. Responses are converted to speech using gTTS .
 
 ---
 
@@ -44,16 +44,12 @@ This layer handles audio coming from Streamlit or file uploads. It supports opti
 Google Chirp enables real-time transcription across many languages, allowing support for global Google Cloud customers. It performs speech-to-text and returns transcriptions for reasoning and structured action selection.
 
 4. **Intelligence Layer (LLMProcessor powered by Gemini)**
-The transcribed text is passed to a Gemini model which interprets intent, generates helpful responses, and follows a strict contract of emitting one JSON action per turn. Supported mock actions include:
+The transcribed text is passed to a Gemini model which interprets intent, generates helpful responses, and follows a strict contract of emitting one JSON action per turn. Supported mock actions include a. looking up billing policies, b. discounts or usage rules, c. gathering account identifiers and d. creating ticket summaries for follow-up.
 
-• Looking up billing policies, discounts, or usage rules
-• Gathering account identifiers
-• Creating ticket summaries for follow-up
-
-This transforms the app from a simple Q&A bot into a practical, mock call-center assistant capable of pulling defined levers.
+This transforms the app from a simple Q&A bot into a practical, mock call-center agent capable of pulling defined levers. It behaves agentic because the LLM doesn’t just generate text—it decides an action in a structured JSON contract, then the code executes that action (get_account, get_policy, create_ticket) and returns the result. The agency comes from the model choosing a lever each turn based on conversation context. 
 
 5. **Further Backend Developement (Firestore)**
-Responses, transcripts, or ticket summaries can be logged to a small GCP database (Firestore in the future) for analytics or follow-up. When deployed on Cloud Run, the pipeline runs inside a container image that must be rebuilt and redeployed after every code change.
+Further work can be done to call real GCP APIs in lieu of mock data. Responses, transcripts, or ticket summaries can be logged to Google Firestore for analytics & follow-up. 
 
 ## Data Flow
 User Voice → Chirp (`chirp_3`) → Text Transcript → Gemini 2.5-Flash-Lite → One JSON Action Emitted →
@@ -95,14 +91,12 @@ Service enablement success outputs a message like this:
 Operation "operations/acat.p2-155021701306-95be0a20-f588-4f57-ad7f-57e3540848b0" finished successfully.
 ```
 
-5. Build your container image for Cloud Run
-For example:
+5. Build your container image for Cloud Run. Please remember to update <PROJECT_ID>.
 ```
 gcloud builds submit --tag gcr.io/<PROJECT_ID>/google-cloud-billing-agent .
 ```
 
-6. Deploy to Cloud Run
-For example:
+6. Deploy to Cloud Run. Please remember to update <PROJECT_ID>.
 ```
 gcloud run deploy google-cloud-billing-agent \
 --image gcr.io/<PROJECT_ID>/google-cloud-billing-agent \
@@ -113,7 +107,7 @@ gcloud run deploy google-cloud-billing-agent \
 --set-env-vars GEMINI_API_KEY="YOUR_GEMINI_KEY",LLM_MODEL="gemini-2.5-flash-lite",SAMPLE_RATE="16000",SPEECH_LOCATION="us"
 ```
 
-Your project name might differ from "google-cloud-billing-agent"
+Your project name might differ from "google-cloud-billing-agent".
 
 7. Useful Google Cloud Shell commands
 ```
@@ -128,9 +122,9 @@ Cloud Run cannot access local microphone hardware. Packages like sounddevice and
 ## Authentication and Environment Variables Rules
 Cloud Run only receives environment variables set explicitly using --set-env-vars.
 
-•Local .env files are ignored in Cloud Run
-• Keys must be passed directly in the deploy command
-• A code change always requires container rebuild + redeploy
+- Local `.env` files are ignored in Cloud Run  
+- Keys must be passed directly in the deploy command  
+- A code change always requires container rebuild + redeploy
 
 You can use the --set-env-vars flag to set multiple environment variables at once. For example:
 ```
@@ -147,11 +141,13 @@ gcloud auth login
 ```
 
 ## Rules for Passing Keys
-For flags like --set-env-vars:
-• Quotes are only required when shell escaping is needed (spaces, commas, symbols)
-• Plain alphanumeric values without spaces usually don’t require quotes
-• Structured values like project IDs or JSON-like strings are safer when quoted
-• Multiple env vars can also be passed in a comma-separated format with multiple set-env-vars.
+For flags like `--set-env-vars`:
+
+- Quotes are only required when shell escaping is needed (spaces, commas, or symbols)  
+- Plain alphanumeric values without spaces typically do not require quotes  
+- Structured values like project IDs or JSON-like strings are safer when quoted  
+- Multiple environment variables can be passed in comma-separated format
+
 
 ## Note on Google Cloud Billing
 Make sure your Gemini API Usage is not currently exceeding your rate limit otherwise you may want to adjust your Google AI budget to work with this agent.
